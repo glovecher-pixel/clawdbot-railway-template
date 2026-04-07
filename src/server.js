@@ -748,6 +748,15 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
     await runCmd(OPENCLAW_NODE, clawArgs(["config", "set", "gateway.bind", "loopback"]));
     await runCmd(OPENCLAW_NODE, clawArgs(["config", "set", "gateway.port", String(INTERNAL_GATEWAY_PORT)]));
 
+// Set allowed origins for Control UI from environment variables
+  const allowedOrigins = process.env.CONTROL_UI_ALLOWED_ORIGINS?.trim() ||
+                         process.env.OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS?.trim() ||
+                         process.env.ALLOWED_ORIGINS?.trim();
+  if (allowedOrigins) {
+    await runCmd(OPENCLAW_NODE, clawArgs(["config", "set", "gateway.controlUi.allowedOrigins", allowedOrigins]));
+  }
+    
+
     // Railway runs behind a reverse proxy. Trust loopback as a proxy hop so local client detection
     // remains correct when X-Forwarded-* headers are present.
     await runCmd(
