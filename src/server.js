@@ -1455,6 +1455,24 @@ const server = app.listen(PORT, "0.0.0.0", async () => {
     }
   }
 
+  // Sync allowed origins on every startup
+  if (isConfigured()) {
+    const allowedOrigins = process.env.CONTROL_UI_ALLOWED_ORIGINS?.trim() ||
+                           process.env.OPENCLAW_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS?.trim() ||
+                           process.env.ALLOWED_ORIGINS?.trim();
+    if (allowedOrigins) {
+      console.log("[wrapper] syncing allowed origins...");
+      try {
+        await runCmd(OPENCLAW_NODE, clawArgs(["config", "set", "gateway.controlUi.allowedOrigins", allowedOrigins]));
+        console.log("[wrapper] allowed origins synced");
+      } catch (err) {
+        console.warn(`[wrapper] failed to sync allowed origins: ${String(err)}`);
+      }
+    }
+  }
+
+
+
   // Auto-start the gateway if already configured so polling channels (Telegram/Discord/etc.)
   // work even if nobody visits the web UI.
   if (isConfigured()) {
