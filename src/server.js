@@ -171,12 +171,36 @@ async function waitForGatewayReady(opts = {}) {
   return false;
 }
 
+async function runDoctorFix() {
+  console.log("[doctor] Running `openclaw doctor --fix` to repair configuration issues...");
+  try {
+    const r = await runCmd(OPENCLAW_NODE, clawArgs(["doctor", "--fix"]), {
+      env: {
+        ...process.env,
+        OPENCLAW_STATE_DIR: STATE_DIR,
+        OPENCLAW_WORKSPACE_DIR: WORKSPACE_DIR,
+      },
+    });
+    const out = (r.output || "").trim();
+    if (out) console.log(`[doctor] Output:\n${out}`);
+    if (r.code !== 0) {
+      console.warn(`[doctor] doctor --fix exited with code ${r.code}; continuing anyway`);
+    } else {
+      console.log("[doctor] doctor --fix completed successfully");
+    }
+  } catch (err) {
+    console.warn(`[doctor] doctor --fix failed: ${String(err)}; continuing anyway`);
+  }
+}
+
 async function startGateway() {
   if (gatewayProc) return;
   if (!isConfigured()) throw new Error("Gateway cannot start: not configured");
 
   fs.mkdirSync(STATE_DIR, { recursive: true });
   fs.mkdirSync(WORKSPACE_DIR, { recursive: true });
+
+  await runDoctorFix();
 
   const args = [
     "gateway",
